@@ -4,9 +4,9 @@
   "author": "NPA",
   "license": "MIT",
   "scripts": {
-    "start": "webpack-dev-server",
-    "build": "webpack -p",
-    "serve": "nodemon ./src/server/index.js"
+    "start": "webpack -p & node ./src/server/index.js",
+    "client": "webpack-dev-server",
+    "serve": "webpack -p & nodemon ./src/server/index.js"
   },
   "dependencies": {
     "express": "^4.15.2",
