@@ -2,3 +2,36 @@ html, body {
     padding: 0;
     margin: 0;
 }
+.app {
+    display: table;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+.sidebar {
+    display: table-cell;
+    width: 20%;
+    background: #2980b9;
+}
+.interact {
+    display: table-cell;
+    padding-left: 20px;
+}
+.messages-wrap .messages {
+    overflow-y: scroll;
+    height: 80vh;
+}
+.chat-form {
+    padding: 10px 0;
+    margin-right: 30px;
+}
+.chat-form input {
+    height: 20px;
+    width: 100%;
+}
+.message {
+    font-size: 18px;
+}
+.message strong {
+    margin-right: 5px;
+}
