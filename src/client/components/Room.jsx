@@ -1,7 +1,9 @@
 import React from 'react';
 import MessageList from './MessageList.jsx';
 import MessageForm from './MessageForm.jsx';
-var CryptoJS = require("crypto-js");
+const CryptoJS = require("crypto-js");
+const NodeRSA = require('node-rsa');
+const crypto = require("crypto");
 
 export default class Room extends React.Component {
     constructor(props) {
@@ -9,31 +11,49 @@ export default class Room extends React.Component {
         this.state = {
             messages: [],
             users: [],
-            user: ''
+            user: '',
+            keyRSA: new NodeRSA({b: 512}),
+            keyAES: null
         }
         this.handleSubmitMessage = this.handleSubmitMessage.bind(this);
         this._initialize = this._initialize.bind(this);
         this._userJoined = this._userJoined.bind(this);
         this._messageRecieve = this._messageRecieve.bind(this);
         this._userLeft = this._userLeft.bind(this);
+        this._recieveKey = this._recieveKey.bind(this);
     }
 
     componentDidMount() {
-        var socket = this.props.socket;
+        let socket = this.props.socket;
         socket.on('init', this._initialize);
+        socket.on('key:recieve', this._recieveKey);
         socket.on('send:message', this._messageRecieve);
         socket.on('user:join', this._userJoined);
         socket.on('user:left', this._userLeft);
     }
 
     _initialize(data) {
-        var { users, name } = data;
+        let socket = this.props.socket;
+        let { users, name } = data;
+        let key = this.state.keyRSA;
+
+        socket.emit('key:send', key.exportKey('pkcs8-public-pem'));
         this.setState({ users, user: name });
     }
 
+    _recieveKey(data) {
+        let key = this.state.keyRSA;
+
+        var buffer = new Buffer(data, "base64");
+        var decrypted = crypto.privateDecrypt(key.exportKey('pkcs8-private-pem'), buffer);
+        this.setState({
+            keyAES: decrypted.toString("utf8")
+        });
+    }
+
     _userJoined(data) {
-        var { users, messages } = this.state;
-        var { name } = data;
+        let { users, messages } = this.state;
+        let { name } = data;
         users.push(name);
         messages.push({
             user: 'APPLICATION BOT',
@@ -43,9 +63,9 @@ export default class Room extends React.Component {
     }
 
     _userLeft(data) {
-        var {users, messages} = this.state;
-		var {name} = data;
-		var index = users.indexOf(name);
+        let {users, messages} = this.state;
+		let {name} = data;
+		let index = users.indexOf(name);
 		users.splice(index, 1);
 		messages.push({
 			user: 'APPLICATION BOT',
@@ -54,27 +74,39 @@ export default class Room extends React.Component {
 		this.setState({users, messages});  
     }
 
-    _messageRecieve(data) {
-        var { messages, user } = this.state;
-        console.log(data);
+    _messageRecieve(message) {
+        let { messages, user, keyAES } = this.state;
+        let { hash, data } = message;
+        console.log(message);
         // decrypt
-        var bytes  = CryptoJS.AES.decrypt(data.text.toString(), 'secret key 123');
-        var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-        messages.push(decryptedData);
-        ////
-        this.setState({ messages });
+        let bytes  = CryptoJS.AES.decrypt(data, keyAES);
+        let decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+
+        let hashValue = CryptoJS.MD5(data).toString();
+
+        if (hash == hashValue) {
+            messages.push(decryptedData);
+            this.setState({ messages });
+        } else {
+            messages.push({
+                user: 'APPLICATION BOT',
+                text : 'Message recieve fail!'
+            });
+            this.setState({ messages });
+        }
     }
 
     handleSubmitMessage(message) {
-        var socket = this.props.socket;
-        var { messages, user } = this.state;
+        let socket = this.props.socket;
+        let { messages, user, keyAES } = this.state;
         let object = {user: user, text: message};
         messages.push(object);
         this.setState({ messages });
         // encrypt
-        var ciphertext = CryptoJS.AES.encrypt(JSON.stringify(object), 'secret key 123').toString();
+        let ciphertext = CryptoJS.AES.encrypt(JSON.stringify(object), keyAES).toString();
+        let hashValue = CryptoJS.MD5(ciphertext).toString();
         ////
-        socket.emit('send:message', {user: user, text: ciphertext});
+        socket.emit('send:message', {hash: hashValue, data: ciphertext});
     }
 
     render() {

@@ -1,3 +1,5 @@
+var crypto = require("crypto");
+
 // Keep track of which names are used so that there are no duplicates
 var userNames = (function () {
     var names = {};
@@ -55,21 +57,26 @@ module.exports = function (socket) {
     // send the new user their name and a list of users
     socket.emit('init', {
         name: name,
-        users: userNames.get()
+        users: userNames.get(),
+        sessionId: socket.id
     });
 
     // notify other clients that a new user has joined
-    socket.broadcast.emit('user:join', {
+    socket.emit('user:join', {
         name: name
+    });
+
+    //
+    socket.on('key:send', function (key) {
+        var buffer = new Buffer('abc');
+        var encrypted = crypto.publicEncrypt(key, buffer);
+        socket.emit('key:recieve', encrypted);
     });
 
     // broadcast a user's message to other users
     socket.on('send:message', function (data) {
         console.log(data);
-        socket.broadcast.emit('send:message', {
-            user: data.user,
-            text: data.text
-        });
+        socket.broadcast.emit('send:message', data);
     });
 
     // validate a user's name change, and broadcast it on success
