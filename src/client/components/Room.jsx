@@ -10,11 +10,12 @@ export default class Room extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            roomId: '',
             messages: [],
             users: [],
             user: '',
             keyRSA: new NodeRSA({b: 512}),
-            keyAES: null
+            keyAES: null,
         }
         this.handleSubmitMessage = this.handleSubmitMessage.bind(this);
         this._initialize = this._initialize.bind(this);
@@ -24,13 +25,19 @@ export default class Room extends React.Component {
         this._recieveKey = this._recieveKey.bind(this);
     }
 
-    componentDidMount() {
+    componentWillReceiveProps(nextProps) {
+        console.log('daa');
         let socket = this.props.socket;
         socket.on('init', this._initialize);
         socket.on('key:recieve', this._recieveKey);
         socket.on('send:message', this._messageRecieve);
         socket.on('user:join', this._userJoined);
         socket.on('user:left', this._userLeft);
+        this.setState({
+            messages: [],
+            users: [],
+            roomId: nextProps.roomId
+        })
     }
 
     _initialize(data) {

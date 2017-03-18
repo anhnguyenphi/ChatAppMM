@@ -1,4 +1,6 @@
-var crypto = require("crypto");
+const crypto = require("crypto");
+const SocketIOFile = require('socket.io-file');
+const Array = require('lodash/array');
 
 // Keep track of which names are used so that there are no duplicates
 var userNames = (function () {
@@ -51,21 +53,41 @@ var userNames = (function () {
 }());
 
 const keyAES = crypto.randomBytes(10).toString('hex');
-const SocketIOFile = require('socket.io-file');
+var rooms = [];
 
 // export function for listening to the socket
 module.exports = function (socket) {
     var name = userNames.getGuestName();
 
     // send the new user their name and a list of users
-    socket.emit('init', {
-        name: name,
-        users: userNames.get()
+    socket.on('room:open', function(room) {
+        if (Array.indexOf(rooms, room)  < 0) {
+            rooms.push(room);
+        }
+        socket.room = room;
+        socket.join(room);
+        socket.emit('room:open', true);
+        socket.emit('room:list', rooms);
+    });
+    // send the new user their name and a list of users
+    socket.on('room:close', function(room) {
+        socket.room = '';
+        socket.leave(socket.room);
+        socket.emit('room:close', true);
+        socket.emit('room:list', rooms);
+    });
+    // send the new user their name and a list of users
+    socket.on('init', function(data) {
+        socket.username = name;
+        socket.emit('init', {
+            name: name,
+            users: userNames.get()
+        })
     });
 
     // notify other clients that a new user has joined
-    socket.emit('user:join', {
-        name: name
+    socket.on('user:join', function(data) {
+        socket.emit('user:join', {name: name});
     });
 
     //
