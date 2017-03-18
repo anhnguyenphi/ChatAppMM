@@ -1,6 +1,7 @@
 import React from 'react';
 import MessageList from './MessageList.jsx';
 import MessageForm from './MessageForm.jsx';
+var CryptoJS = require("crypto-js");
 
 export default class Room extends React.Component {
     constructor(props) {
@@ -55,16 +56,25 @@ export default class Room extends React.Component {
 
     _messageRecieve(data) {
         var { messages, user } = this.state;
-        messages.push({user: data.user, text: data.text});
+        console.log(data);
+        // decrypt
+        var bytes  = CryptoJS.AES.decrypt(data.text.toString(), 'secret key 123');
+        var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+        messages.push(decryptedData);
+        ////
         this.setState({ messages });
     }
 
     handleSubmitMessage(message) {
         var socket = this.props.socket;
         var { messages, user } = this.state;
-        messages.push({user: user, text: message});
+        let object = {user: user, text: message};
+        messages.push(object);
         this.setState({ messages });
-        socket.emit('send:message', {user: user, text: message});
+        // encrypt
+        var ciphertext = CryptoJS.AES.encrypt(JSON.stringify(object), 'secret key 123').toString();
+        ////
+        socket.emit('send:message', {user: user, text: ciphertext});
     }
 
     render() {
