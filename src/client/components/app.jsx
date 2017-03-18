@@ -18,8 +18,8 @@ export default class App extends React.Component {
                         onRoomSubmit={this.handleJoinRoom}
                     />
                 </div>
-                <Room 
-                    messages={[]}
+                <Room
+                    socket={this.props.socket}
                 />
             </div>
         );

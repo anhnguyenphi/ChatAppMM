@@ -7,7 +7,6 @@ export default class MessageForm extends React.Component {
         this.state = {
             text: ''
         }
-
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
     }
@@ -20,7 +19,6 @@ export default class MessageForm extends React.Component {
         event.preventDefault();
 
         const text = this.state.text;
-
         this.props.onMessageSubmit(text);
         this.setState({text: ''});
     }
