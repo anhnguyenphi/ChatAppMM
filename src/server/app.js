@@ -15,7 +15,7 @@ io.sockets.on('connection', socket);
 // Route
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html')
-})
+});
 
 http.listen(app.get('port'), () => {
   console.log('React Chat App listening on ' + app.get('port'))
