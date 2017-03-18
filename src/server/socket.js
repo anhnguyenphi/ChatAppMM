@@ -50,6 +50,8 @@ var userNames = (function () {
     };
 }());
 
+var keyAES = crypto.randomBytes(10).toString('hex');
+
 // export function for listening to the socket
 module.exports = function (socket) {
     var name = userNames.getGuestName();
@@ -57,8 +59,7 @@ module.exports = function (socket) {
     // send the new user their name and a list of users
     socket.emit('init', {
         name: name,
-        users: userNames.get(),
-        sessionId: socket.id
+        users: userNames.get()
     });
 
     // notify other clients that a new user has joined
@@ -68,7 +69,7 @@ module.exports = function (socket) {
 
     //
     socket.on('key:send', function (key) {
-        var buffer = new Buffer('abc');
+        var buffer = new Buffer(keyAES);
         var encrypted = crypto.publicEncrypt(key, buffer);
         socket.emit('key:recieve', encrypted);
     });
