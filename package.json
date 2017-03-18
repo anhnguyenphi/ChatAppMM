@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "start": "webpack -p & node ./src/server/index.js",
-    "serve": "webpack --watch & nodemon ./src/server/index.js"
+    "client": "webpack --watch",
+    "serve": "nodemon ./src/server/index.js"
   },
   "dependencies": {
     "crypto-js": "^3.1.9-1",
