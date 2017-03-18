@@ -1,6 +1,7 @@
 import React from 'react';
 import MessageList from './MessageList.jsx';
 import MessageForm from './MessageForm.jsx';
+import FileUpload from './FileUpload.jsx';
 const CryptoJS = require("crypto-js");
 const NodeRSA = require('node-rsa');
 const crypto = require("crypto");
@@ -71,7 +72,7 @@ export default class Room extends React.Component {
 			user: 'APPLICATION BOT',
 			text : name +' Left'
 		});
-		this.setState({users, messages});  
+		this.setState({users, messages});
     }
 
     _messageRecieve(message) {
@@ -118,6 +119,11 @@ export default class Room extends React.Component {
                 <MessageForm
                     onMessageSubmit={this.handleSubmitMessage}
                 />
+
+                <FileUpload
+                    socket={this.props.socket}
+                />
+
             </div>
         );
     }
