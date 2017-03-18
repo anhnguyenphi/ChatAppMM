@@ -5,8 +5,7 @@
   "license": "MIT",
   "scripts": {
     "start": "webpack -p & node ./src/server/index.js",
-    "client": "webpack --watch",
-    "serve": "webpack -p & nodemon ./src/server/index.js"
+    "serve": "webpack --watch & nodemon ./src/server/index.js"
   },
   "dependencies": {
     "crypto-js": "^3.1.9-1",
@@ -17,6 +16,8 @@
     "react-dom": "^15.4.2",
     "socket.io": "^1.7.3",
     "socket.io-client": "^1.7.3",
+    "socket.io-file": "^2.0.14",
+    "socket.io-file-client": "^2.0.121",
     "webpack": "^2.2.1",
     "webpack-dev-server": "^2.4.2"
   },
