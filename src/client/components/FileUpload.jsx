@@ -1,5 +1,11 @@
 import React from 'react';
 import SocketIOFileClient from 'socket.io-file-client';
+var crypto = require("crypto"),
+    algorithm = 'aes-256-ctr',
+    password = 'd6F3Efeq';
+var io = require('socket.io-client');
+var ss = require('socket.io-stream');
+var fs = require('fs');
 
 export default class FileUpload extends React.Component {
     constructor(props) {
@@ -35,9 +41,16 @@ export default class FileUpload extends React.Component {
     }
 
     handleUpFile() {
+      var socket = this.props.socket;
       var fileEl = document.getElementById('upload_file');
       console.log(fileEl);
-      var uploadIds = this.state.uploader.upload(fileEl);
+      // var uploadIds = this.state.uploader.upload(fileEl);
+      var stream = ss.createStream();
+      var filename = 'profile.jpg';
+      var encrypt = crypto.createCipher(algorithm, password);
+
+      ss(socket.connect('http://localhost:3000')).emit('profile-image', stream, { name: filename });
+      fs.createReadStream(filename).pipe(encrypt).pipe(stream);
     }
 
     handleFormSubmit(event) {
