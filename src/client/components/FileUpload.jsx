@@ -1,5 +1,12 @@
 import React from 'react';
 import SocketIOFileClient from 'socket.io-file-client';
+var crypto = require('crypto'),
+    algorithm = 'aes-256-ctr',
+    password = 'd6F3Efeq';
+var FileReadStream = require('filestream/read');
+var io = require('socket.io-client');
+var ss = require('socket.io-stream');
+var fs = require('fs-stream-websocket');
 
 export default class FileUpload extends React.Component {
     constructor(props) {
@@ -35,9 +42,19 @@ export default class FileUpload extends React.Component {
     }
 
     handleUpFile() {
+    //   var socket = this.props.socket;
       var fileEl = document.getElementById('upload_file');
       console.log(fileEl);
-      var uploadIds = this.state.uploader.upload(fileEl);
+      // var uploadIds = this.state.uploader.upload(fileEl);
+      var stream = ss.createStream();
+      ss.forceBase64 = true;
+      var filename = 'abc.txt';
+      var encrypt = crypto.createCipher(algorithm, password);
+
+      var socket = io.connect('http://localhost:3000/file');
+      ss(socket).emit('file', stream, { name: filename });
+      fs.createReadStream(filename).pipe(stream);
+      console.log(stream);
     }
 
     handleFormSubmit(event) {
