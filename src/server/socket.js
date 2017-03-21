@@ -113,6 +113,12 @@ module.exports = function ioInit(http) {
             socket.broadcast.to(socket.room).emit('send:message', data);
         });
 
+        // send file
+        socket.on('file:upload', function(data) {
+            console.log(data);
+            socket.broadcast.to(socket.room).emit('file:upload', data);
+        });
+
         // clean up when a user leaves, and broadcast it to other users
         socket.on('disconnect', function () {
             console.log(socket.room);
