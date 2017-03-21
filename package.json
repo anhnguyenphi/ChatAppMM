@@ -11,6 +11,7 @@
   "dependencies": {
     "crypto-js": "^3.1.9-1",
     "express": "^4.15.2",
+    "lodash": "^4.17.4",
     "node-rsa": "^0.4.2",
     "path": "^0.12.7",
     "react": "^15.4.2",
