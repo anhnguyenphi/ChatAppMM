@@ -11,8 +11,6 @@ export default class FileUpload extends React.Component {
 
         var socket = this.props.socket;
 
-        socket.on('file:upload', this._receiveFile);
-
         var uploader = new SocketIOFileClient(socket);
         uploader.on('start', function (fileInfo) {
             console.log('Start uploading', fileInfo);
@@ -34,19 +32,6 @@ export default class FileUpload extends React.Component {
             uploader: uploader,
             file: null
         };
-    }
-
-    _receiveFile(data) {
-        console.log("receive file");
-        var decrypted = CryptoJS.AES.decrypt(data.encrypted.toString(), '11111')
-                                    .toString(CryptoJS.enc.Latin1);
-        if(!/^data:/.test(decrypted)){
-            alert("Invalid pass phrase or file! Please try again.");
-            return false;
-        }
-        var a = document.getElementById("download");
-        a.setAttribute("href", decrypted);
-        a.setAttribute('download', data.name);
     }
 
     handleFileInput(event) {
@@ -84,7 +69,6 @@ export default class FileUpload extends React.Component {
                     />
                     <button type="submit"> send </button>
                 </form>
-                <a href="" id="download">Download</a>
             </div>
         );
     }

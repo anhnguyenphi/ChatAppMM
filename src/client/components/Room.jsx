@@ -6,6 +6,14 @@ const CryptoJS = require("crypto-js");
 const NodeRSA = require('node-rsa');
 const crypto = require("crypto");
 
+class Download extends React.Component {
+    render() {
+        return (
+            <a href={this.props.href} download={this.props.download}>{this.props.download}</a>
+        );
+    }
+}
+
 export default class Room extends React.Component {
     constructor(props) {
         super(props);
@@ -23,6 +31,7 @@ export default class Room extends React.Component {
         this._messageRecieve = this._messageRecieve.bind(this);
         this._userLeft = this._userLeft.bind(this);
         this._recieveKey = this._recieveKey.bind(this);
+        this._receiveFile = this._receiveFile.bind(this);
 
         let socket = this.props.socket;
         socket.on('init', this._initialize);
@@ -30,6 +39,24 @@ export default class Room extends React.Component {
         socket.on('send:message', this._messageRecieve);
         socket.on('user:join', this._userJoined);
         socket.on('user:left', this._userLeft);
+        socket.on('file:upload', this._receiveFile);
+    }
+    
+    _receiveFile(data) {
+        let { messages } = this.state;
+        var decrypted = CryptoJS.AES.decrypt(data.encrypted.toString(), '11111')
+                                    .toString(CryptoJS.enc.Latin1);
+        if(!/^data:/.test(decrypted)){
+            alert("Invalid pass phrase or file! Please try again.");
+            return false;
+        }
+        messages.push({
+            user: 'APPLICATION BOT',
+            text: <Download href={decrypted} download={data.name} />
+        });
+        this.setState({
+            messages: messages
+        });
     }
 
     _initialize(data) {
