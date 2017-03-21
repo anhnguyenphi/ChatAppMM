@@ -14,7 +14,7 @@ export default class Room extends React.Component {
             messages: [],
             users: [],
             user: '',
-            keyRSA: new NodeRSA({b: 512}),
+            keyRSA: null,
             keyAES: null,
         }
         this.handleSubmitMessage = this.handleSubmitMessage.bind(this);
@@ -23,30 +23,27 @@ export default class Room extends React.Component {
         this._messageRecieve = this._messageRecieve.bind(this);
         this._userLeft = this._userLeft.bind(this);
         this._recieveKey = this._recieveKey.bind(this);
-    }
 
-    componentWillReceiveProps(nextProps) {
-        console.log('daa');
         let socket = this.props.socket;
         socket.on('init', this._initialize);
         socket.on('key:recieve', this._recieveKey);
         socket.on('send:message', this._messageRecieve);
         socket.on('user:join', this._userJoined);
         socket.on('user:left', this._userLeft);
-        this.setState({
-            messages: [],
-            users: [],
-            roomId: nextProps.roomId
-        })
     }
 
     _initialize(data) {
         let socket = this.props.socket;
-        let { users, name } = data;
-        let key = this.state.keyRSA;
+        let { users, name, roomId } = data;
+        let key = new NodeRSA({b: 512});
 
         socket.emit('key:send', key.exportKey('pkcs8-public-pem'));
-        this.setState({ users, user: name });
+        this.setState({ 
+            users: users,
+            user: name,
+            roomId: roomId,
+            keyRSA: key
+        });
     }
 
     _recieveKey(data) {
@@ -83,6 +80,7 @@ export default class Room extends React.Component {
     }
 
     _messageRecieve(message) {
+        console.log('message recieve');
         let { messages, user, keyAES } = this.state;
         let { hash, data } = message;
         console.log(message);
@@ -120,6 +118,7 @@ export default class Room extends React.Component {
     render() {
         return (
             <div className="interact">
+                <p>Your name: {this.state.user}</p>
                 <MessageList
                     messages={this.state.messages}
                 />

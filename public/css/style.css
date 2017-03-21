@@ -19,7 +19,7 @@ html, body {
 }
 .messages-wrap .messages {
     overflow-y: scroll;
-    height: 80vh;
+    height: 70vh;
 }
 .chat-form {
     padding: 10px 0;

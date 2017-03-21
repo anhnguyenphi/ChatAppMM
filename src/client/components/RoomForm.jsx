@@ -8,12 +8,11 @@ export default class RoomForm extends React.Component {
         this.state = {
             input: '',
             roomId: '',
-            isJoined: false
+            isJoined: true
         }
 
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
-        this.handleOut = this.handleOut.bind(this);
         this._open = this._open.bind(this);
         this._close = this._close.bind(this);
     }
@@ -24,18 +23,23 @@ export default class RoomForm extends React.Component {
         socket.on('room:close', this._close);
     }
 
-    _open(data) {
-        if (data){
-            this.props.onRoomSubmit(this.state.roomId);
+    _open(roomId) {
+        if (roomId){
+            let socket = this.props.socket;
+            this.props.onRoomSubmit(roomId);
+            socket.emit('init', true);
             this.setState({
+                roomId: roomId,
                 isJoined: true
             })
         }        
     }
 
-    _close(data) {
-        if (date){
+    _close(roomId) {
+        if (roomId){
+            this.props.onRoomSubmit(null);
             this.setState({
+                roomId: null,
                 isJoined: false
             })
         }
@@ -48,17 +52,9 @@ export default class RoomForm extends React.Component {
     handleSubmit(event) {
         event.preventDefault();
         let socket = this.props.socket;
-        const roomId = this.state.roomId;
-
+        const roomId = this.state.input;
         socket.emit('room:open', roomId); 
         this.setState({input: ''});
-    }
-
-    handleOut(event) {
-        event.preventDefault();
-        let socket = this.props.socket;
-        const roomId = this.state.roomId;
-        socket.emit('room:close', roomId); 
     }
 
     render() {
@@ -68,7 +64,7 @@ export default class RoomForm extends React.Component {
                 <form onSubmit={this.handleSubmit}>
                     <input
                         type="text"
-                        disabled={this.roomId}
+                        disabled={this.isJoined}
                         value={this.state.input}
                         onChange={this.handleChange}
                     />
@@ -78,13 +74,7 @@ export default class RoomForm extends React.Component {
                     />
                 </form>
                 { this.state.isJoined && (
-                    <form onSubmit={this.handleOut}>
-                        <p>Joined Room: {this.roomId}</p>
-                        <input
-                            type="submit"
-                            value="Out"
-                        />
-                    </form>
+                    <p>Joined Room: {this.state.roomId}</p>
                 )}
             </div>
         );

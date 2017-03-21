@@ -1,6 +1,7 @@
 import React from 'react';
 import Room from './Room.jsx';
 import RoomForm from './RoomForm.jsx';
+import RoomList from './RoomList.jsx';
 
 export default class App extends React.Component {
     constructor(props) {
@@ -12,10 +13,18 @@ export default class App extends React.Component {
         this.handleJoinRoom = this.handleJoinRoom.bind(this);
     }
     handleJoinRoom(roomId) {
-        this.setState({
-            isJoinRoom: true,
-            currentRoom: roomId
-        })
+        if (roomId) {
+            this.setState({
+                isJoinRoom: true,
+                currentRoom: roomId
+            })
+        } else {
+            this.setState({
+                isJoinRoom: false,
+                currentRoom: ''
+            })
+        }
+
     }
     render() {
         return (
@@ -25,19 +34,15 @@ export default class App extends React.Component {
                         socket={this.props.socket}
                         onRoomSubmit={this.handleJoinRoom}
                     />
-                </div>
-                {this.state.isJoinRoom ? (
-                    <Room
-                        roomId={this.state.currentRoom}
+                    <RoomList
                         socket={this.props.socket}
+
                     />
-                ) : (
-                    <Room
-                        roomId={this.state.currentRoom}
-                        socket={null}
-                    />
-                )}
-                
+                </div>
+                <Room
+                    roomId={this.state.currentRoom}
+                    socket={this.props.socket}
+                />
             </div>
         );
     }
