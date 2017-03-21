@@ -52,7 +52,8 @@ var userNames = (function () {
     };
 }());
 
-const keyAES = crypto.randomBytes(10).toString('hex');
+const keyAES = crypto.randomBytes(8).toString('hex');
+const keyTD = crypto.randomBytes(10).toString('hex');
 var rooms = ['Lobby'];
 
 module.exports = function ioInit(http) {
@@ -102,8 +103,10 @@ module.exports = function ioInit(http) {
         //
         socket.on('key:send', function (key) {
             var buffer = new Buffer(keyAES);
-            var encrypted = crypto.publicEncrypt(key, buffer);
-            socket.emit('key:recieve', encrypted);
+            var AES = crypto.publicEncrypt(key, buffer);
+            var buffer = new Buffer(keyTD);
+            var TDes = crypto.publicEncrypt(key, buffer);
+            socket.emit('key:recieve', {AES: AES, TDes: TDes});
         });
 
         // broadcast a user's message to other users
@@ -115,7 +118,7 @@ module.exports = function ioInit(http) {
 
         // send file
         socket.on('file:upload', function(data) {
-            console.log(data);
+            console.log("send file");
             socket.broadcast.to(socket.room).emit('file:upload', data);
         });
 

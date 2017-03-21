@@ -30,8 +30,15 @@ export default class FileUpload extends React.Component {
 
         this.state = { 
             uploader: uploader,
-            file: null
+            file: null,
+            keyE: this.props.keyE
         };
+    }
+
+    componentWillReceiveProps(nextProps) {
+        this.setState({
+            keyE: nextProps.keyE
+        })
     }
 
     handleFileInput(event) {
@@ -48,9 +55,10 @@ export default class FileUpload extends React.Component {
         var reader = new FileReader();
         var uploader = this.state.uploader;
         var socket = this.props.socket;
+        var key = this.state.keyE;
         reader.onload = function(e){
             console.log("upload file");
-            var encrypted = CryptoJS.AES.encrypt(e.target.result, '11111');
+            var encrypted = CryptoJS.AES.encrypt(e.target.result, key);
             socket.emit('file:upload', {encrypted: encrypted.toString(), name: file.name });
         }
 
