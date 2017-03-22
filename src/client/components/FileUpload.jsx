@@ -11,25 +11,7 @@ export default class FileUpload extends React.Component {
 
         var socket = this.props.socket;
 
-        var uploader = new SocketIOFileClient(socket);
-        uploader.on('start', function (fileInfo) {
-            console.log('Start uploading', fileInfo);
-        });
-        uploader.on('stream', function (fileInfo) {
-            console.log('Streaming... sent ' + fileInfo.sent + ' bytes.');
-        });
-        uploader.on('complete', function (fileInfo) {
-            console.log('Upload Complete', fileInfo);
-        });
-        uploader.on('error', function (err) {
-            console.log('Error!', err);
-        });
-        uploader.on('abort', function (fileInfo) {
-            console.log('Aborted: ', fileInfo);
-        });
-
         this.state = { 
-            uploader: uploader,
             file: null,
             keyE: this.props.keyE
         };
@@ -53,7 +35,6 @@ export default class FileUpload extends React.Component {
 
         var file = this.state.file;
         var reader = new FileReader();
-        var uploader = this.state.uploader;
         var socket = this.props.socket;
         var key = this.state.keyE;
         reader.onload = function(e){
@@ -62,7 +43,7 @@ export default class FileUpload extends React.Component {
             socket.emit('file:upload', {encrypted: encrypted.toString(), name: file.name });
         }
 
-        console.log(reader.readAsDataURL(file));
+        reader.readAsDataURL(file);
 
     }
 
