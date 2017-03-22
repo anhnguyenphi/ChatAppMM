@@ -6,6 +6,14 @@ const CryptoJS = require("crypto-js");
 const NodeRSA = require('node-rsa');
 const crypto = require("crypto");
 
+class Download extends React.Component {
+    render() {
+        return (
+            <a href={this.props.href} download={this.props.download}>{this.props.download}</a>
+        );
+    }
+}
+
 export default class Room extends React.Component {
     constructor(props) {
         super(props);
@@ -16,6 +24,7 @@ export default class Room extends React.Component {
             user: '',
             keyRSA: null,
             keyAES: null,
+            keyTDes: null,
         }
         this.handleSubmitMessage = this.handleSubmitMessage.bind(this);
         this._initialize = this._initialize.bind(this);
@@ -23,6 +32,7 @@ export default class Room extends React.Component {
         this._messageRecieve = this._messageRecieve.bind(this);
         this._userLeft = this._userLeft.bind(this);
         this._recieveKey = this._recieveKey.bind(this);
+        this._receiveFile = this._receiveFile.bind(this);
 
         let socket = this.props.socket;
         socket.on('init', this._initialize);
@@ -30,6 +40,24 @@ export default class Room extends React.Component {
         socket.on('send:message', this._messageRecieve);
         socket.on('user:join', this._userJoined);
         socket.on('user:left', this._userLeft);
+        socket.on('file:upload', this._receiveFile);
+    }
+    
+    _receiveFile(data) {
+        let { messages, keyAES } = this.state;
+        var decrypted = CryptoJS.AES.decrypt(data.encrypted.toString(), keyAES)
+                                    .toString(CryptoJS.enc.Latin1);
+        if(!/^data:/.test(decrypted)){
+            alert("Invalid pass phrase or file! Please try again.");
+            return false;
+        }
+        messages.push({
+            user: 'APPLICATION BOT',
+            text: <Download href={decrypted} download={data.name} />
+        });
+        this.setState({
+            messages: messages
+        });
     }
 
     _initialize(data) {
@@ -49,10 +77,15 @@ export default class Room extends React.Component {
     _recieveKey(data) {
         let key = this.state.keyRSA;
 
-        var buffer = new Buffer(data, "base64");
-        var decrypted = crypto.privateDecrypt(key.exportKey('pkcs8-private-pem'), buffer);
+        console.log(data);
+        var buffer = new Buffer(data.AES, "base64");
+        var AES = crypto.privateDecrypt(key.exportKey('pkcs8-private-pem'), buffer);
+
+        var buffer = new Buffer(data.TDes, "base64");
+        var TDes = crypto.privateDecrypt(key.exportKey('pkcs8-private-pem'), buffer);
         this.setState({
-            keyAES: decrypted.toString("utf8")
+            keyAES: AES.toString("utf8"),
+            keyTDes: TDes.toString("utf8")
         });
     }
 
@@ -81,11 +114,11 @@ export default class Room extends React.Component {
 
     _messageRecieve(message) {
         console.log('message recieve');
-        let { messages, user, keyAES } = this.state;
+        let { messages, user, keyTDes } = this.state;
         let { hash, data } = message;
         console.log(message);
         // decrypt
-        let bytes  = CryptoJS.AES.decrypt(data, keyAES);
+        let bytes  = CryptoJS.TripleDES.decrypt(data, keyTDes);
         let decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
 
         let hashValue = CryptoJS.MD5(data).toString();
@@ -104,12 +137,12 @@ export default class Room extends React.Component {
 
     handleSubmitMessage(message) {
         let socket = this.props.socket;
-        let { messages, user, keyAES } = this.state;
+        let { messages, user, keyTDes } = this.state;
         let object = {user: user, text: message};
         messages.push(object);
         this.setState({ messages });
         // encrypt
-        let ciphertext = CryptoJS.AES.encrypt(JSON.stringify(object), keyAES).toString();
+        let ciphertext = CryptoJS.TripleDES.encrypt(JSON.stringify(object), keyTDes).toString();
         let hashValue = CryptoJS.MD5(ciphertext).toString();
         ////
         socket.emit('send:message', {hash: hashValue, data: ciphertext});
@@ -128,6 +161,7 @@ export default class Room extends React.Component {
 
                 <FileUpload
                     socket={this.props.socket}
+                    keyE={this.state.keyAES}
                 />
 
             </div>

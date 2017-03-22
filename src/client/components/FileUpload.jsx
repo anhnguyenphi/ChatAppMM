@@ -1,60 +1,62 @@
 import React from 'react';
 import SocketIOFileClient from 'socket.io-file-client';
+const CryptoJS = require("crypto-js");
 
 export default class FileUpload extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            uploader: ''
-        };
 
-        this.handleUpFile = this.handleUpFile.bind(this);
+        this.handleFileInput = this.handleFileInput.bind(this);
+        this.handleFormSubmit = this.handleFormSubmit.bind(this);
+
+        var socket = this.props.socket;
+
+        this.state = { 
+            file: null,
+            keyE: this.props.keyE
+        };
     }
 
     componentWillReceiveProps(nextProps) {
-        var socket = this.props.socket;
-
-        if (socket) {
-            var uploader = new SocketIOFileClient(socket);
-            uploader.on('start', function (fileInfo) {
-                console.log('Start uploading', fileInfo);
-            });
-            uploader.on('stream', function (fileInfo) {
-                console.log('Streaming... sent ' + fileInfo.sent + ' bytes.');
-            });
-            uploader.on('complete', function (fileInfo) {
-                console.log('Upload Complete', fileInfo);
-            });
-            uploader.on('error', function (err) {
-                console.log('Error!', err);
-            });
-            uploader.on('abort', function (fileInfo) {
-                console.log('Aborted: ', fileInfo);
-            });
-
-            this.setState({ uploader: uploader });
-        }
+        this.setState({
+            keyE: nextProps.keyE
+        })
     }
 
-    handleUpFile() {
-        var fileEl = document.getElementById('upload_file');
-        console.log(fileEl);
-        var uploadIds = this.state.uploader.upload(fileEl);
+    handleFileInput(event) {
+        var file = event.target.files[0];
+        this.setState({
+            file: file
+        })
     }
 
     handleFormSubmit(event) {
         event.preventDefault();
+
+        var file = this.state.file;
+        var reader = new FileReader();
+        var socket = this.props.socket;
+        var key = this.state.keyE;
+        reader.onload = function(e){
+            console.log("upload file");
+            var encrypted = CryptoJS.AES.encrypt(e.target.result, key);
+            socket.emit('file:upload', {encrypted: encrypted.toString(), name: file.name });
+        }
+
+        reader.readAsDataURL(file);
+
     }
 
     render() {
         return (
             <div className="chat-form">
-                <form>
+                <form onSubmit={this.handleFormSubmit}>
                     <input
                         id="upload_file"
                         type="file"
+                        onChange={this.handleFileInput}
                     />
-                    <button type="button" onClick={this.handleUpFile} > send </button>
+                    <button type="submit"> send </button>
                 </form>
             </div>
         );

@@ -1,5 +1,4 @@
 const crypto = require("crypto");
-const SocketIOFile = require('socket.io-file');
 const Array = require('lodash/array');
 
 // Keep track of which names are used so that there are no duplicates
@@ -52,7 +51,8 @@ var userNames = (function () {
     };
 }());
 
-const keyAES = crypto.randomBytes(10).toString('hex');
+const keyAES = crypto.randomBytes(8).toString('hex');
+const keyTD = crypto.randomBytes(10).toString('hex');
 var rooms = ['Lobby'];
 
 module.exports = function ioInit(http) {
@@ -102,8 +102,10 @@ module.exports = function ioInit(http) {
         //
         socket.on('key:send', function (key) {
             var buffer = new Buffer(keyAES);
-            var encrypted = crypto.publicEncrypt(key, buffer);
-            socket.emit('key:recieve', encrypted);
+            var AES = crypto.publicEncrypt(key, buffer);
+            var buffer = new Buffer(keyTD);
+            var TDes = crypto.publicEncrypt(key, buffer);
+            socket.emit('key:recieve', {AES: AES, TDes: TDes});
         });
 
         // broadcast a user's message to other users
@@ -111,6 +113,12 @@ module.exports = function ioInit(http) {
             console.log(socket.room);
             console.log(data);
             socket.broadcast.to(socket.room).emit('send:message', data);
+        });
+
+        // send file
+        socket.on('file:upload', function(data) {
+            console.log("send file");
+            socket.broadcast.to(socket.room).emit('file:upload', data);
         });
 
         // clean up when a user leaves, and broadcast it to other users
@@ -121,39 +129,6 @@ module.exports = function ioInit(http) {
             });
             userNames.free(name);
         });
-
-
-        // Upload file
-        var uploader = new SocketIOFile(socket, {
-            // uploadDir: {         // multiple directories
-            //  music: 'data/music',
-            //  document: 'data/document'
-            // },
-            uploadDir: 'data',                          // simple directory
-            // accepts: ['audio/mpeg', 'audio/mp3'],       // chrome and some of browsers checking mp3 as 'audio/mp3', not 'audio/mpeg'
-            maxFileSize: 4194304,                       // 4 MB. default is undefined(no limit)
-            chunkSize: 10240,                           // default is 10240(1KB)
-            transmissionDelay: 0,                       // delay of each transmission, higher value saves more cpu resources, lower upload speed. default is 0(no delay)
-            overwrite: true                             // overwrite file if exists, default is true.
-        });
-        uploader.on('start', (fileInfo) => {
-            console.log('Start uploading');
-            console.log(fileInfo);
-        });
-        uploader.on('stream', (fileInfo) => {
-            console.log(`${fileInfo.wrote} / ${fileInfo.size} byte(s)`);
-        });
-        uploader.on('complete', (fileInfo) => {
-            console.log('Upload Complete.');
-            console.log(fileInfo);
-        });
-        uploader.on('error', (err) => {
-            console.log('Error!', err);
-        });
-        uploader.on('abort', (fileInfo) => {
-            console.log('Aborted: ', fileInfo);
-        });
-
     });
     return io;
 }
