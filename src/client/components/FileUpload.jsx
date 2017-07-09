@@ -1,5 +1,4 @@
 import React from 'react';
-import SocketIOFileClient from 'socket.io-file-client';
 const CryptoJS = require("crypto-js");
 
 export default class FileUpload extends React.Component {
